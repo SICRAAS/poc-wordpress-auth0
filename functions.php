@@ -204,3 +204,36 @@ if ( ! function_exists( 'twentytwentyfour_pattern_categories' ) ) :
 endif;
 
 add_action( 'init', 'twentytwentyfour_pattern_categories' );
+
+if ( ! function_exists( 'sicra_set_role_from_id_token' ) ) {
+
+	function sicra_set_role_from_id_token( $user, $id_token ) {                           
+                                           
+		$no_role = "subscriber";                                                       
+		$wp_role = $no_role;                                                           
+		$role_claim = "https://uloba.no/roles";     
+		
+		$roles = $id_token->$role_claim;
+		if (isset( $id_token->$role_claim )) {                                   
+				$roles = $id_token->$role_claim;                                 
+				$wp_role = sicra_get_wp_role_from_uloba_roles( $roles, $no_role); 
+		}                                                                      
+																			   
+		$user->set_role($wp_role);                                             
+	}                                                                              
+		
+}
+		
+
+if ( ! function_exists( 'sicra_get_wp_role_from_uloba_roles' ) ) {
+	function sicra_get_wp_role_from_uloba_roles( $roles, $no_role ) {                                                               
+	
+		if (in_array( "uloba:adminansatt", $roles)) { return "ulobaansatt"; }       
+		if (in_array( "uloba:arbeidsleder", $roles)) { return "arbeidsleder"; }                               
+		if (in_array( "uloba:assistent", $roles)) { return "assistent"; }                                  
+		return $no_role;
+	}  
+}
+
+add_filter( 'auth0_use_management_api_for_userinfo', '__return_false', 101 );
+add_action( 'auth0_before_login', 'sicra_set_role_from_id_token', 10, 2 );
